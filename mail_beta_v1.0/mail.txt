@@ -1,0 +1,11 @@
+From: "Name" 
+To:  ${url}
+Subject: My CV
+
+Hi all !
+Sorry, this messages is sending automatically. Want to be on interview )))
+I'm shared my contact info and cv.
+CV file
+Bye!
+
+
