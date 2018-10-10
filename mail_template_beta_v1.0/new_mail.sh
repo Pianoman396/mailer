@@ -2,7 +2,7 @@
 
 rtmp_url="smtp://smtp.gmail.com:587"
 rtmp_from="yourmail@gmail.com"
-rtmp_to="yourmail@some.ru"
+rtmp_to="somemail@some.ru"
 rtmp_credentials="yourmail@gmail.com:yourpassword"
 
 file_upload="new_mail.txt"
@@ -43,20 +43,25 @@ mail_cc=""
 function add_file {
     echo "--MULTIPART-MIXED-BOUNDARY
 Content-Type: $1
-Content-Transfer-Encoding: base64" >> "$file_upload"
+Content-Disposition: attachment; filename=$5
+Content-Transfer-Encoding: base64
 
-    if [ ! -z "$2" ]; then
+ $2 "  >> "$file_upload"
+
+    if [ ! -z "$3" ]; then
         echo "Content-Disposition: inline
-Content-Id: <$2>" >> "$file_upload"
+              Content-Id: <$3>" >> "$file_upload"
     else
-        echo "Content-Disposition: attachment; filename=$4" >> "$file_upload"
+        echo "Content-Disposition: attachment; filename=$5" >> "$file_upload"
     fi
-    echo "$3
+    echo "$4
 
 " >> "$file_upload"
 }
 
 message_base64=$(cat message.html | base64)
+pdf_file=$(cat CV.pdf | base64)
+
 
 echo "From: $mail_from
 To: $mail_to
@@ -79,7 +84,8 @@ $message_base64
 
 # add an image with corresponding content-id (here admin.png)
 image_base64=$(curl -s "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_116x41dp.png" | base64)
-add_file "image/jpg" "admin.jpg" "$image_base64"
+# add_file "image/jpg" "admin.jpg" "$image_base64"
+add_file "application/pdf" "$pdf_file" "CV.pdf" "CV.pdf" "CV.pdf"
 
 # add the log file
 log_file=$(cat log.txt | base64)
@@ -94,14 +100,19 @@ echo "--MULTIPART-MIXED-BOUNDARY--" >> "$file_upload"
 
 # send email
 echo "sending ...."
-curl -s "$rtmp_url" \
-     --mail-from "$rtmp_from" \
-     --mail-rcpt "$rtmp_to" \
-     --ssl -u "$rtmp_credentials" \
-     -T "$file_upload" -k --anyauth
-res=$?
-if test "$res" != "0"; then
-   echo "sending failed with: $res"
-else
-    echo "OK"
-fi
+for url in $rtmp_to;do
+
+    echo "fetching $url"
+    curl -s "$rtmp_url" --ssl-reqd\
+         --mail-from "$rtmp_from" \
+         --mail-rcpt "$url" \
+         --ssl -u "$rtmp_credentials" \
+         -T "$file_upload" -k --anyauth
+    res=$?
+    if test "$res" != "0"; then
+        echo "sending failed with: $res"
+    else
+        echo "OK"
+    fi
+done
+wait
