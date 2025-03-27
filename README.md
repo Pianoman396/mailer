@@ -1,2 +1,2 @@
-# Curl Mail sender into linux shell , beta version
+# Curl Mail sender from linux shell, beta version
 
